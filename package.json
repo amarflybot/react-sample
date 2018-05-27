@@ -2,7 +2,7 @@
   "name": "react-sample",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://amarflybot.github.io/react-sample/",
+  "homepage": "http://amarflybot.github.io/react-sample",
   "dependencies": {
     "react": "^16.4.0",
     "react-dom": "^16.4.0",
