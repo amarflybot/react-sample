@@ -2,13 +2,6 @@ import React from 'react';
 import './App.css';
 import Axios from "axios";
 
-/*
-const testData = [
-    {name: "Dan Abramov", avatar_url: "https://avatars0.githubusercontent.com/u/810438?v=4", company: "@facebook"},
-    {name: "Sophie Alpert", avatar_url: "https://avatars2.githubusercontent.com/u/6820?v=4", company: "Humu"},
-    {name: "Sebastian Markbåge", avatar_url: "https://avatars2.githubusercontent.com/u/63648?v=4", company: "Facebook"}]
-*/
-
 const axiosInstance = Axios.create();
 
 const CardList = (props: { profileData: CardProps[]; }) => (
@@ -80,11 +73,9 @@ export class App extends React.Component {
 
     addNewProfile = (profileData: any) => {
         this.setState(prevState => ({
-            //console.log('App', profileData)
             // @ts-ignore
             profiles: [...prevState.profiles, profileData],
         }));
-        //this.state.profiles.push({name: profileData.name, avatar_url: profileData.avatar_url, company: profileData.company})
     }
 
     render() {
