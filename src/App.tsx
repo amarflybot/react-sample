@@ -1,33 +1,84 @@
-import React, {useState} from 'react';
+import React from 'react';
 import './App.css';
 
-function Button(props: { onClickFunction: (arg0: any) => any; increment: React.ReactNode; }) {
-  const handleClick = () => props.onClickFunction(props.increment);
-  return (
-      <button onClick={handleClick}>
-        +{props.increment}
-      </button>
-  );
+const testData = [
+    {name: "Dan Abramov", avatar_url: "https://avatars0.githubusercontent.com/u/810438?v=4", company: "@facebook"},
+    {name: "Sophie Alpert", avatar_url: "https://avatars2.githubusercontent.com/u/6820?v=4", company: "Humu"},
+    {name: "Sebastian Markbåge", avatar_url: "https://avatars2.githubusercontent.com/u/63648?v=4", company: "Facebook"}]
+
+const CardList = (props: { profileData: CardProps[]; }) => (
+    <div>
+        {props.profileData.map(value => <Card {...value}/>)}
+    </div>
+);
+
+
+class CardProps {
+    name: string = '';
+    avatar_url: string = '';
+    company: string = ''
 }
 
-function Display(props: { message: React.ReactNode; }) {
-  return (
-      <div>{props.message}</div>
-  );
+export class Form extends React.Component {
+
+    private userNameInput: React.RefObject<HTMLInputElement> = React.createRef<HTMLInputElement>();
+
+    state = {username: ''}
+
+    handleSubmit = (event: { preventDefault: () => void; }) => {
+        event.preventDefault();
+        console.log(this.state.username);
+    };
+    render() {
+        return (
+            <form onSubmit={this.handleSubmit}>
+                <input
+                    type="text"
+                    placeholder="GitHub Username"
+                    value={this.state.username}
+                    onChange={event => this.setState({username: event.target.value})}
+                    required/>
+                <button>Add new Card</button>
+            </form>
+        );
+    }
 }
 
-function App() {
-  const [counter, setCounter] = useState(0);
-  const incrementCounter = (incr: number) => setCounter(counter+incr);
-  return (
-      <div>
-        <Button onClickFunction={incrementCounter} increment={1} />
-        <Button onClickFunction={incrementCounter} increment={5} />
-        <Button onClickFunction={incrementCounter} increment={10} />
-        <Button onClickFunction={incrementCounter} increment={20} />
-        <Display message={counter}/>
-      </div>
-  );
+export class Card extends React.Component<CardProps> {
+    render() {
+        return (
+            <div className="github-profile" style={{margin: '1rem'}}>
+                <img src={this.props.avatar_url}/>
+                <div className="info" style={{display: 'inline-block', marginLeft: 10}}>
+                    <div className="name" style={{fontSize: '125%'}}>{this.props.name}</div>
+                    <div className="company">{this.props.company}</div>
+                </div>
+            </div>
+        );
+    }
 }
 
-export default App;
+export class App extends React.Component {
+
+    /*constructor(props: { profiles: CardProps[]}) {
+        super(props);
+        this.state = {
+            profiles: testData,
+        };
+    }*/
+    state = {
+        profiles: testData,
+    }
+
+    render() {
+        return (
+            <>
+            <div className="header">
+            The Github Cards App
+            </div>
+            <Form/>
+            <CardList profileData={this.state.profiles}/>
+            </>
+        );
+    }
+}
