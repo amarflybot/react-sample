@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import './App.css';
+import utils from "./utils";
 
 // Color Theme
 const colors: Map<string, string> = new Map([
@@ -9,36 +10,6 @@ const colors: Map<string, string> = new Map([
     ['candidate', 'deepskyblue'],
 ]);
 
-
-// Math science
-const utils = {
-    // Sum an array
-    sum: (arr: any[]) => arr.reduce((acc, curr) => acc + curr, 0),
-
-    // create an array of numbers between min and max (edges included)
-    range: (min: number, max: number) => Array.from({length: max - min + 1}, (_, i) => min + i),
-
-    // pick a random number between min and max (edges included)
-    random: (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1)),
-
-    // Given an array of numbers and a max...
-    // Pick a random sum (< max) from the set of all available sums in arr
-    randomSumIn: (arr: string | any[], max: number) => {
-        const sets = [[]];
-        const sums = [];
-        for (let i = 0; i < arr.length; i++) {
-            for (let j = 0, len = sets.length; j < len; j++) {
-                const candidateSet = sets[j].concat(arr[i]);
-                const candidateSum = utils.sum(candidateSet);
-                if (candidateSum <= max) {
-                    sets.push(candidateSet);
-                    sums.push(candidateSum);
-                }
-            }
-        }
-        return sums[utils.random(0, sums.length - 1)];
-    },
-};
 
 type PlayNumberProps = {
     number: number,
@@ -99,19 +70,53 @@ function App() {
         startNewGame={() => setGameId(gameId+1)} />;
 }
 
-const Game: React.FC<{startNewGame: () => void}> = () => {
-
+function useGameState() {
     const [stars, setStars] = useState(utils.random(1, 9));
     const [availableNumbers, setAvailableNumbers] = useState(utils.range(1, 9));
     const [candidateNumbers, setCandidateNumbers] = useState([0]);
     const [secondsLeft, setSecondsLeft] = useState(10);
 
-    const resetGame = () => {
-        setCandidateNumbers([]);
-        setStars(utils.random(1, 9));
-        setAvailableNumbers(utils.range(1, 9));
-        setSecondsLeft(10);
-    }
+
+    useEffect(() => {
+        if (secondsLeft > 0 && availableNumbers.length > 0) {
+            const timerId = setTimeout(() => {
+                setSecondsLeft(secondsLeft - 1)
+            }, 1000);
+            return () => {
+                clearTimeout(timerId);
+            }
+        }
+    });
+
+    const setGameState = (newCandidateNums: number[]) => {
+        if (utils.sum(newCandidateNums) !== stars) {
+            setCandidateNumbers(newCandidateNums);
+        } else {
+            let newAvailableNumbers = availableNumbers.filter(value => !newCandidateNums.includes(value));
+            setAvailableNumbers(newAvailableNumbers);
+            setCandidateNumbers([]);
+            setStars(utils.randomSumIn(newAvailableNumbers, 9));
+        }
+    };
+
+    return {
+        stars,
+        availableNumbers,
+        candidateNumbers,
+        secondsLeft,
+        setGameState
+    };
+}
+
+const Game: React.FC<{startNewGame: () => void}> = (props) => {
+
+    const {
+        stars,
+        availableNumbers,
+        candidateNumbers,
+        secondsLeft,
+        setGameState
+    } = useGameState();
 
     const gameStatus = availableNumbers.length === 0
         ? 'won'
@@ -133,31 +138,14 @@ const Game: React.FC<{startNewGame: () => void}> = () => {
     };
 
     const onNumberClick = (number: number, currentStatus: string) => {
-        if (currentStatus === 'used' || gameStatus !== 'active') {
+        if (currentStatus === 'used' || secondsLeft === 0) {
             return;
         }
         const newCandidateNums = currentStatus === 'available'
             ? candidateNumbers.concat(number)
             : candidateNumbers.filter(value => value !== number);
-        if (utils.sum(newCandidateNums) !== stars) {
-            setCandidateNumbers(newCandidateNums);
-        } else {
-            let newAvailableNumbers = availableNumbers.filter(value => !newCandidateNums.includes(value));
-            setAvailableNumbers(newAvailableNumbers);
-            setCandidateNumbers([]);
-            setStars(utils.randomSumIn(newAvailableNumbers, 9));
-        }
+        setGameState(newCandidateNums);
     }
-    useEffect(() => {
-        if (secondsLeft > 0 || gameStatus === 'active') {
-            let timerId = setTimeout(() => {
-                setSecondsLeft(secondsLeft - 1)
-            }, 1000);
-            return () => {
-                clearTimeout(timerId);
-            }
-        }
-    });
 
     return (
         <div className="game">
@@ -167,7 +155,7 @@ const Game: React.FC<{startNewGame: () => void}> = () => {
             <div className="body">
                 <div className="left">
                     {gameStatus !== 'active' ? (
-                        <PlayAgain onclick={resetGame} gameStatus={gameStatus}/>
+                        <PlayAgain onclick={props.startNewGame} gameStatus={gameStatus}/>
                     ) : (
                         <StarsDisplay stars={stars}/>
                     )}
